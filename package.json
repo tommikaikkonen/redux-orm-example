@@ -1,0 +1,32 @@
+{
+  "name": "redux-orm-example",
+  "version": "0.1.0",
+  "description": "An example of redux-orm usage.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --hot"
+  },
+  "keywords": [
+    "redux",
+    "orm",
+    "redux-orm"
+  ],
+  "author": "Tommi Kaikkonen",
+  "license": "MIT",
+  "devDependencies": {
+    "babel-loader": "^5.4.0",
+    "html-webpack-plugin": "^1.7.0",
+    "react-bootstrap": "^0.28.1",
+    "react-redux": "^4.0.0",
+    "redux": "^3.0.4",
+    "redux-diff-logger": "0.0.6",
+    "redux-orm": "^0.1.19",
+    "webpack": "^1.12.9",
+    "webpack-dev-server": "^1.14.0"
+  },
+  "dependencies": {
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3"
+  }
+}
