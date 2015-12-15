@@ -203,7 +203,7 @@ export class ModelForm extends Component {
             fields: this.props.fields,
             instance,
             onSubmit: this.onSubmit.bind(this),
-            validate: this.props.validate,
+            validate: modelClass.validate.bind(modelClass),
         };
         const modelName = modelClass.modelName;
         const heading = instance ? 'Edit' : `Add a ${modelName}`;
@@ -221,17 +221,9 @@ ModelForm.propTypes = {
     instance: Types.object,
     modelClass: Types.func,
     fields: Types.object.isRequired,
-    validate: Types.func,
 };
 
 export class AuthorForm extends Component {
-    validate(data) {
-        if (data.name && data.name.length > 0) {
-            return true;
-        }
-        return false;
-    }
-
     render() {
         const props = Object.assign({
             fields: {
@@ -239,7 +231,6 @@ export class AuthorForm extends Component {
                     type: 'text',
                 },
             },
-            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -253,13 +244,6 @@ AuthorForm.defaultProps = {
 };
 
 export class GenreForm extends Component {
-    validate(data) {
-        if (data.name && data.name.length > 0) {
-            return true;
-        }
-        return false;
-    }
-
     render() {
         const props = Object.assign({
             fields: {
@@ -267,7 +251,6 @@ export class GenreForm extends Component {
                     type: 'text',
                 },
             },
-            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -281,13 +264,6 @@ GenreForm.defaultProps = {
 };
 
 export class PublisherForm extends Component {
-    validate(data) {
-        if (data.name && data.name.length > 0) {
-            return true;
-        }
-        return false;
-    }
-
     render() {
         const props = Object.assign({
             fields: {
@@ -295,7 +271,6 @@ export class PublisherForm extends Component {
                     type: 'text',
                 },
             },
-            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -309,18 +284,6 @@ PublisherForm.defaultProps = {
 };
 
 export class BookForm extends Component {
-    validate(data) {
-        const hasName = data.name && data.name.length > 0;
-        const hasPublisher = data.publisher !== null;
-        const hasGenres = data.genres.length > 0;
-        const hasAuthors = data.authors.length > 0;
-
-        if (hasName && hasPublisher && hasGenres && hasAuthors) {
-            return true;
-        }
-        return false;
-    }
-
     render() {
         const props = Object.assign({
             fields: {
@@ -328,7 +291,6 @@ export class BookForm extends Component {
                     type: 'text',
                 },
             },
-            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }

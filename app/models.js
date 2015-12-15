@@ -22,6 +22,20 @@ class CRUDModel extends Model {
 }
 
 class Book extends CRUDModel {
+    // This classmethod holds no special meaning
+    // in redux-orm, we just use it in formComponents.
+    static validate(publisher) {
+        const hasName = publisher.name && publisher.name.length > 0;
+        const hasPublisher = publisher.publisher !== null;
+        const hasGenres = publisher.genres.length > 0;
+        const hasAuthors = publisher.authors.length > 0;
+
+        if (hasName && hasPublisher && hasGenres && hasAuthors) {
+            return true;
+        }
+        return false;
+    }
+
     toString() {
         return `Book: ${this.name}`;
     }
@@ -35,6 +49,13 @@ Book.fields = {
 };
 
 class Author extends CRUDModel {
+    static validate(props) {
+        if (props.name && props.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     writesGenres() {
         const authorBooks = this.bookSet;
         const allGenres = [];
@@ -47,6 +68,13 @@ class Author extends CRUDModel {
 Author.modelName = 'Author';
 
 class Publisher extends CRUDModel {
+    static validate(props) {
+        if (props.name && props.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     get authors() {
         const AuthorModel = this.getClass().session.Author;
         const authorSet = {};
@@ -63,7 +91,14 @@ class Publisher extends CRUDModel {
 }
 Publisher.modelName = 'Publisher';
 
-class Genre extends CRUDModel {}
+class Genre extends CRUDModel {
+    static validate(props) {
+        if (props.name && props.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+}
 Genre.modelName = 'Genre';
 
 const schema = new Schema();

@@ -4,9 +4,13 @@ This is a (visually very) crude non-async CRUD app that provides an example of r
 
 [Try the Example Book Database app in action.](http://tommikaikkonen.github.io/redux-orm-example/). Open up the console to see the store diff and incoming App props after each dispatch.
 
+![Screenshot of the Example App](https://raw.githubusercontent.com/tommikaikkonen/redux-orm-example/master/screenshot.png)
+
 ## Reading the Source Code
 
 At the heart of `redux-orm` are the model declarations. They are declared in [app/models.js](app/models.js). You can use ES6 class inheritance to build your model definitions; just don't register your abstract models to the schema. This app uses one abstract model: `CRUDModel`. It defines a CRUD-enabled reducer that helps with boilerplate (each model takes three action types, create, update and remove. The action type is in the form `{{ action }}_{{ modelname }}`, for example `CREATE_BOOK`). Then `Book`, `Author`, `Genre` and `Publisher` subclass from `CRUDModel`.
+
+Each of the concrete models has a `validate` classmethod. This doesn't relate to `redux-orm` at all; it provides no validation services. We just call the `validate` classmethod in the app forms. Models are a convenient place to put business logic closely related to them.
 
 The concrete models define their fields. `Book` has many `Author`s, many `Genre`s and one `Publisher`. They define some helping methods. For example, `Author` has a `writesGenres` method, that returns an array of all the genres his or her books are included in. Likewise `Publisher` has an `authors` method that returns a `QuerySet` of all the authors that have published a book with that `Publisher` instance. At the end of [app/models.js](app/models.js) we register the models to a new `Schema` instance and export it along with the models. You could also do this in a separate schema file.
 
