@@ -1,4 +1,4 @@
-import {fk, many, Model} from 'redux-orm';
+import {fk, many, Model, Schema} from 'redux-orm';
 
 class CRUDModel extends Model {
     static reducer(state, action, ConcreteModel) {
@@ -66,10 +66,14 @@ Publisher.modelName = 'Publisher';
 class Genre extends CRUDModel {}
 Genre.modelName = 'Genre';
 
+const schema = new Schema();
+schema.register(Author, Book, Publisher, Genre);
+
 export {
   Book,
   Author,
   Publisher,
   Genre,
+  schema,
 };
 

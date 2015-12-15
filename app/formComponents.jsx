@@ -15,43 +15,53 @@ const Types = React.PropTypes;
 class ModelFormBase extends Component {
     constructor(props) {
         super(props);
-        if (props.instance) {
-            const instance = props.instance;
-            const state = Object.assign({}, instance._fields);
+        const Model = props.modelClass;
+        const instance = props.instance;
 
-            const Model = props.modelClass;
-            for (const fieldName in Model.fields) { // eslint-disable-line
-                const field = Model.fields[fieldName];
-                if (field instanceof ManyToMany) {
+        const state = {};
+        if (instance) {
+            Object.assign(state, instance._fields);
+        }
+
+        for (const fieldName in Model.fields) { // eslint-disable-line
+            const field = Model.fields[fieldName];
+            if (field instanceof ManyToMany) {
+                if (instance) {
                     state[fieldName] = instance[fieldName].idArr.map(id => id.toString());
-                } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                } else {
+                    state[fieldName] = [];
+                }
+            } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                if (instance) {
                     const val = instance[fieldName];
                     if (val !== null) {
                         state[fieldName] = val.getId().toString();
                     } else {
                         state[fieldName] = null;
                     }
+                } else {
+                    state[fieldName] = null;
                 }
             }
-            this.state = state;
-        } else {
-            this.state = {};
         }
+
+        for (const fieldName in this.props.fields) { // eslint-disable-line
+            if (!state.hasOwnProperty(fieldName)) {
+                state[fieldName] = '';
+            }
+        }
+
+        this.state = state;
     }
 
     onSubmit(event) {
         event.preventDefault();
 
-        const submitProps = Object.assign({}, this.state);
-        const intParser = id => parseInt(id, 10);
-        for (const key in this.state) { // eslint-disable-line
-            const val = this.state[key];
-            if (isArray(val)) {
-                submitProps[key] = val.map(intParser);
-            }
-        }
+        const submitProps = this.getFieldData();
 
-        this.props.onSubmit(submitProps);
+        if (this.validate(submitProps)) {
+            this.props.onSubmit(submitProps);
+        }
     }
 
     onChange(field) {
@@ -71,6 +81,30 @@ class ModelFormBase extends Component {
         return null;
     }
 
+    getFieldData() {
+        const submitProps = Object.assign({}, this.state);
+        const intParser = id => parseInt(id, 10);
+        for (const key in this.state) { // eslint-disable-line
+            const val = this.state[key];
+            if (isArray(val)) {
+                submitProps[key] = val.map(intParser);
+            }
+        }
+        return submitProps;
+    }
+
+    getOptionsForModelName(modelName) {
+        const relatedModel = this.getModel(modelName);
+        return relatedModel.all();
+    }
+
+    validate(data) {
+        if (this.props.validate) {
+            return this.props.validate(data);
+        }
+        return true;
+    }
+
     render() {
         const modelClass = this.props.modelClass;
         const relatedFields = modelClass.fields;
@@ -81,8 +115,8 @@ class ModelFormBase extends Component {
         for (const key in relatedFields) { // eslint-disable-line
             const field = relatedFields[key];
 
-            const relatedModel = this.getModel(field.toModelName);
-            const options = relatedModel.all().map(modelInst => {
+            const optionsQs = this.getOptionsForModelName(field.toModelName);
+            const options = optionsQs.map(modelInst => {
                 const id = modelInst.getId();
                 return <option value={id} key={id}>{modelInst.toString()}</option>;
             });
@@ -98,6 +132,7 @@ class ModelFormBase extends Component {
                     onChange: changeHandler,
                     ref: (ref) => this.fieldComponents[key] = ref,
                 };
+                options.splice(0, 0, <option value={null} key={null}>No Option Chosen</option>);
             } else if (field instanceof ManyToMany) {
                 props = {
                     key: key,
@@ -131,10 +166,12 @@ class ModelFormBase extends Component {
 
         const onSubmit = this.onSubmit.bind(this);
 
+        const submitDisabled = !this.validate(this.getFieldData());
+
         return (
             <form>
                 {fieldEls}
-                <ButtonInput type="submit" value="Save" onClick={onSubmit}/>
+                <ButtonInput type="submit" disabled={submitDisabled} value="Save" onClick={onSubmit}/>
             </form>
         );
     }
@@ -145,6 +182,7 @@ ModelFormBase.propTypes = {
     fields: Types.object,
     onSubmit: Types.func,
     instance: Types.object,
+    validate: Types.func,
 };
 
 ModelFormBase.defaultProps = {
@@ -165,6 +203,7 @@ export class ModelForm extends Component {
             fields: this.props.fields,
             instance,
             onSubmit: this.onSubmit.bind(this),
+            validate: this.props.validate,
         };
         const modelName = modelClass.modelName;
         const heading = instance ? 'Edit' : `Add a ${modelName}`;
@@ -182,9 +221,17 @@ ModelForm.propTypes = {
     instance: Types.object,
     modelClass: Types.func,
     fields: Types.object.isRequired,
+    validate: Types.func,
 };
 
 export class AuthorForm extends Component {
+    validate(data) {
+        if (data.name && data.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     render() {
         const props = Object.assign({
             fields: {
@@ -192,6 +239,7 @@ export class AuthorForm extends Component {
                     type: 'text',
                 },
             },
+            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -205,6 +253,13 @@ AuthorForm.defaultProps = {
 };
 
 export class GenreForm extends Component {
+    validate(data) {
+        if (data.name && data.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     render() {
         const props = Object.assign({
             fields: {
@@ -212,6 +267,7 @@ export class GenreForm extends Component {
                     type: 'text',
                 },
             },
+            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -225,6 +281,13 @@ GenreForm.defaultProps = {
 };
 
 export class PublisherForm extends Component {
+    validate(data) {
+        if (data.name && data.name.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
     render() {
         const props = Object.assign({
             fields: {
@@ -232,6 +295,7 @@ export class PublisherForm extends Component {
                     type: 'text',
                 },
             },
+            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }
@@ -245,6 +309,18 @@ PublisherForm.defaultProps = {
 };
 
 export class BookForm extends Component {
+    validate(data) {
+        const hasName = data.name && data.name.length > 0;
+        const hasPublisher = data.publisher !== null;
+        const hasGenres = data.genres.length > 0;
+        const hasAuthors = data.authors.length > 0;
+
+        if (hasName && hasPublisher && hasGenres && hasAuthors) {
+            return true;
+        }
+        return false;
+    }
+
     render() {
         const props = Object.assign({
             fields: {
@@ -252,6 +328,7 @@ export class BookForm extends Component {
                     type: 'text',
                 },
             },
+            validate: this.validate,
         }, this.props);
         return <ModelForm {...props}/>;
     }

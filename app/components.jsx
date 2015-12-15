@@ -5,7 +5,9 @@ import NavItem from 'react-bootstrap/lib/NavItem';
 import Button from 'react-bootstrap/lib/Button';
 import Label from 'react-bootstrap/lib/Label';
 import { connect } from 'react-redux';
-import schema from './schema';
+import {QuerySet} from 'redux-orm';
+
+import {schema} from './models';
 import {
     BookForm,
     AuthorForm,
@@ -58,7 +60,7 @@ class GenreViewer extends ModelViewer {
 }
 
 GenreViewer.propTypes = {
-    genres: React.PropTypes.arrayOf(React.PropTypes.object),
+    genres: Types.instanceOf(QuerySet).isRequired,
     onEdit: Types.func,
     onDelete: Types.func,
 };
@@ -71,6 +73,7 @@ class PublisherViewer extends ModelViewer {
             const books = publisher.bookSet.plain.map(book => book.name);
             const authors = publisher.authors.plain.map(author => author.name);
             const onEdit = this.onEdit.bind(this);
+
             return (
                 <li key={publisher.getId()}>
                     <Panel header={header}>
@@ -90,7 +93,7 @@ class PublisherViewer extends ModelViewer {
 }
 
 PublisherViewer.propTypes = {
-    publishers: React.PropTypes.arrayOf(React.PropTypes.object),
+    publishers: Types.instanceOf(QuerySet).isRequired,
 };
 
 class AuthorViewer extends ModelViewer {
@@ -124,12 +127,12 @@ class AuthorViewer extends ModelViewer {
     }
 }
 AuthorViewer.propTypes = {
-    authors: React.PropTypes.arrayOf(React.PropTypes.object),
+    authors: Types.instanceOf(QuerySet).isRequired,
 };
 
 class BookViewer extends ModelViewer {
     render() {
-        const books = this.props.children;
+        const books = this.props.books;
         const bookObjs = books.map(book => {
             const onDelete = this.onDelete.bind(this, book.id);
             const onEdit = this.onEdit.bind(this);
@@ -176,7 +179,7 @@ class BookViewer extends ModelViewer {
 }
 
 BookViewer.propTypes = {
-    children: React.PropTypes.arrayOf(React.PropTypes.object),
+    books: Types.instanceOf(QuerySet).isRequired,
     onEdit: React.PropTypes.func,
     onDelete: React.PropTypes.func,
 };
@@ -237,9 +240,7 @@ class App extends Component {
             <div>
                 <BookForm onSubmit={onCreate}/>,
                 <h2>List of Books</h2>
-                <BookViewer onDelete={onDelete} onEdit={onEdit}>
-                    {books}
-                </BookViewer>
+                <BookViewer onDelete={onDelete} onEdit={onEdit} books={books}/>
             </div>
         );
     }
@@ -335,6 +336,7 @@ class App extends Component {
     }
 
     render() {
+        console.log('Incoming props on App render:');
         console.log(this.props);
         let subView;
 
