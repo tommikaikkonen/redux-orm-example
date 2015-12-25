@@ -16,12 +16,13 @@ const createStoreWithMiddleWare = applyMiddleware(logger)(createStore);
 
 function bootstrapState() {
     const initialState = schema.getDefaultState();
+    const session = schema.withMutations(initialState);
     const {
         Book,
         Author,
         Publisher,
         Genre,
-    } = schema.withMutations(initialState);
+    } = session;
 
     const business = Genre.create({name: 'Business'});
     const philosophy = Genre.create({name: 'Philosophy'});
@@ -57,7 +58,6 @@ function bootstrapState() {
     });
     book3.authors.add(author3);
     book3.genres.add(fiction);
-
     return initialState;
 }
 

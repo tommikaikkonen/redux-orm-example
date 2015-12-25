@@ -1,19 +1,30 @@
-import React, {Component} from 'react';
+import React from 'react';
 import Panel from 'react-bootstrap/lib/Panel';
 import Nav from 'react-bootstrap/lib/Nav';
 import NavItem from 'react-bootstrap/lib/NavItem';
 import Button from 'react-bootstrap/lib/Button';
 import Label from 'react-bootstrap/lib/Label';
+import {createStructuredSelector} from 'reselect';
 import { connect } from 'react-redux';
-import {QuerySet} from 'redux-orm';
+import Component from 'react-pure-render/component';
 
-import {schema} from './models';
 import {
     BookForm,
     AuthorForm,
     PublisherForm,
     GenreForm,
 } from './formComponents';
+
+import {
+    bookSelector,
+    authorSelector,
+    publisherSelector,
+    genreSelector,
+    bookChoices,
+    authorChoices,
+    publisherChoices,
+    genreChoices,
+} from './selectors';
 
 const Types = React.PropTypes;
 
@@ -37,16 +48,15 @@ class GenreViewer extends ModelViewer {
         const genres = this.props.genres.map(genre => {
             const header = <strong>{genre.name}</strong>;
 
-            const books = genre.bookSet.plain.map(book => book.name);
             const onEdit = this.onEdit.bind(this);
             const onDelete = this.onDelete.bind(this, genre.id);
             const footer = <Button bsStyle="danger" onClick={onDelete}>Delete</Button>;
             return (
-                <li key={genre.getId()}>
+                <li key={genre.id}>
                     <Panel header={header} footer={footer}>
                         <strong>Books in this genre:</strong><br/>
-                        {books.join(', ')}
-                        <GenreForm instance={genre} onSubmit={onEdit}/>
+                        {genre.books.map(book => book.name).join(', ')}
+                        <GenreForm initial={genre} onSubmit={onEdit}/>
                     </Panel>
                 </li>
             );
@@ -60,7 +70,7 @@ class GenreViewer extends ModelViewer {
 }
 
 GenreViewer.propTypes = {
-    genres: Types.instanceOf(QuerySet).isRequired,
+    genres: Types.arrayOf(Types.object).isRequired,
     onEdit: Types.func,
     onDelete: Types.func,
 };
@@ -69,21 +79,18 @@ class PublisherViewer extends ModelViewer {
     render() {
         const publishers = this.props.publishers.map(publisher => {
             const header = <strong>{publisher.name}</strong>;
-
-            const books = publisher.bookSet.plain.map(book => book.name);
-            const authors = publisher.authors.plain.map(author => author.name);
             const onEdit = this.onEdit.bind(this);
 
             return (
-                <li key={publisher.getId()}>
+                <li key={publisher.id}>
                     <Panel header={header}>
                         <dl>
                             <dt>Published Books</dt>
-                            <dd>{books.join(', ')}</dd>
+                            <dd>{publisher.books.map(book => book.name).join(', ')}</dd>
                             <dt>Published Authors</dt>
-                            <dd>{authors.join(', ')}</dd>
+                            <dd>{publisher.authors.map(author => author.name).join(', ')}</dd>
                         </dl>
-                        <PublisherForm instance={publisher} onSubmit={onEdit}/>
+                        <PublisherForm id={publisher.id} initial={publisher} onSubmit={onEdit}/>
                     </Panel>
                 </li>
             );
@@ -93,7 +100,7 @@ class PublisherViewer extends ModelViewer {
 }
 
 PublisherViewer.propTypes = {
-    publishers: Types.instanceOf(QuerySet).isRequired,
+    publishers: Types.arrayOf(Types.object).isRequired,
 };
 
 class AuthorViewer extends ModelViewer {
@@ -101,20 +108,23 @@ class AuthorViewer extends ModelViewer {
         const authors = this.props.authors.map(author => {
             const header = <strong>{author.name}</strong>;
 
-            const genres = author.writesGenres().map(genreName => {
-                return <span key={genreName}><Label bsStyle="primary">{genreName}</Label>&nbsp;</span>;
+            const genres = author.genres.map(genre => {
+                return (
+                    <span key={genre}>
+                        <Label bsStyle="primary">{genre}</Label>&nbsp;
+                    </span>);
             });
             const onEdit = this.onEdit.bind(this);
             const onDelete = this.onDelete.bind(this, author.id);
             const footer = <Button bsStyle="danger" onClick={onDelete}>Delete</Button>;
             return (
-                <li key={author.getId()}>
+                <li key={author.id}>
                     <Panel header={header} footer={footer}>
                         <dl>
                             <dt>Genres Written In</dt>
                             <dd>{genres}</dd>
                         </dl>
-                        <AuthorForm instance={author} onSubmit={onEdit}/>
+                        <AuthorForm id={author.id} initial={author} onSubmit={onEdit}/>
                     </Panel>
                 </li>
             );
@@ -127,7 +137,7 @@ class AuthorViewer extends ModelViewer {
     }
 }
 AuthorViewer.propTypes = {
-    authors: Types.instanceOf(QuerySet).isRequired,
+    authors: Types.arrayOf(Types.object).isRequired,
 };
 
 class BookViewer extends ModelViewer {
@@ -136,8 +146,7 @@ class BookViewer extends ModelViewer {
         const bookObjs = books.map(book => {
             const onDelete = this.onDelete.bind(this, book.id);
             const onEdit = this.onEdit.bind(this);
-            const authors = book.authors.plain.map(author => author.name);
-            const genres = book.genres.plain.map(genre => {
+            const genres = book.genres.map(genre => {
                 return (
                     <span key={genre.name}>
                         <Label bsStyle="primary">
@@ -153,8 +162,16 @@ class BookViewer extends ModelViewer {
                     <Button bsStyle="danger" onClick={onDelete}>Delete</Button>
                 </div>
             );
+            const formProps = {
+                initial: book,
+                onSubmit: onEdit,
+                authorChoices: this.props.authorChoices,
+                publisherChoices: this.props.publisherChoices,
+                genreChoices: this.props.genreChoices,
+            };
+
             return (
-                <li key={book.getId()}>
+                <li key={book.id}>
                     <Panel header={header} footer={footer}>
                         <dl>
                             <dt>Published by</dt>
@@ -162,9 +179,9 @@ class BookViewer extends ModelViewer {
                             <dt>Genres</dt>
                             <dd>{genres}</dd>
                             <dt>Authors</dt>
-                            <dd>{authors.join(', ')}</dd>
+                            <dd>{book.authors.map(author => author.name).join(', ')}</dd>
                         </dl>
-                        <BookForm instance={book} onSubmit={onEdit}/>
+                        <BookForm {...formProps}/>
                     </Panel>
                 </li>);
         });
@@ -179,9 +196,9 @@ class BookViewer extends ModelViewer {
 }
 
 BookViewer.propTypes = {
-    books: Types.instanceOf(QuerySet).isRequired,
-    onEdit: React.PropTypes.func,
-    onDelete: React.PropTypes.func,
+    books: Types.arrayOf(Types.object).isRequired,
+    onEdit: Types.func,
+    onDelete: Types.func,
 };
 
 class App extends Component {
@@ -190,10 +207,6 @@ class App extends Component {
             type: 'SELECT_VIEW',
             payload: viewName,
         });
-    }
-
-    get orm() {
-        return schema.from(this.props.orm);
     }
 
     renderSidebarNav() {
@@ -214,8 +227,6 @@ class App extends Component {
     }
 
     renderBooks() {
-        const books = this.orm.Book.all();
-
         const onCreate = (pl) => {
             this.props.dispatch({
                 type: 'CREATE_BOOK',
@@ -238,16 +249,25 @@ class App extends Component {
 
         return (
             <div>
-                <BookForm onSubmit={onCreate}/>,
+                <BookForm
+                    onSubmit={onCreate}
+                    authorChoices={this.props.authorChoices}
+                    publisherChoices={this.props.publisherChoices}
+                    genreChoices={this.props.genreChoices}/>,
                 <h2>List of Books</h2>
-                <BookViewer onDelete={onDelete} onEdit={onEdit} books={books}/>
+                <BookViewer
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    books={this.props.books}
+                    authorChoices={this.props.authorChoices}
+                    publisherChoices={this.props.publisherChoices}
+                    genreChoices={this.props.genreChoices}/>
             </div>
         );
     }
 
 
     renderAuthors() {
-        const authors = this.orm.Author.all();
         const onCreate = (pl) => {
             this.props.dispatch({
                 type: 'CREATE_AUTHOR',
@@ -271,14 +291,12 @@ class App extends Component {
         return (
             <div>
                 <AuthorForm onSubmit={onCreate}/>
-                <AuthorViewer authors={authors} onDelete={onDelete} onEdit={onEdit}/>
+                <AuthorViewer authors={this.props.authors} onDelete={onDelete} onEdit={onEdit}/>
             </div>
         );
     }
 
     renderPublishers() {
-        const publishers = this.orm.Publisher.all();
-
         const onCreate = (pl) => {
             this.props.dispatch({
                 type: 'CREATE_PUBLISHER',
@@ -301,14 +319,13 @@ class App extends Component {
         return (
             <div>
                 <PublisherForm onSubmit={onCreate}/>
-                <PublisherViewer publishers={publishers} onDelete={onDelete} onEdit={onEdit}/>
+                <PublisherViewer publishers={this.props.publishers} onDelete={onDelete} onEdit={onEdit}/>
             </div>
         );
     }
 
     renderGenres() {
-        const genres = this.orm.Genre.all();
-        const onCreate = (pl) => {
+        const onCreate = pl => {
             this.props.dispatch({
                 type: 'CREATE_GENRE',
                 payload: pl,
@@ -321,7 +338,7 @@ class App extends Component {
                 payload: id,
             });
         };
-        const onEdit = (props) => {
+        const onEdit = props => {
             this.props.dispatch({
                 type: 'UPDATE_GENRE',
                 payload: props,
@@ -330,7 +347,7 @@ class App extends Component {
         return (
             <div>
                 <GenreForm onSubmit={onCreate}/>
-                <GenreViewer genres={genres} onDelete={onDelete} onEdit={onEdit}/>
+                <GenreViewer genres={this.props.genres} onDelete={onDelete} onEdit={onEdit}/>
             </div>
         );
     }
@@ -378,13 +395,36 @@ class App extends Component {
 }
 
 App.propTypes = {
-    orm: React.PropTypes.object,
+    books: Types.arrayOf(Types.object),
+    bookChoices: Types.arrayOf(Types.object),
+    authors: Types.arrayOf(Types.object),
+    authorChoices: Types.arrayOf(Types.object),
+    publishers: Types.arrayOf(Types.object),
+    publisherChoices: Types.arrayOf(Types.object),
+    genres: Types.arrayOf(Types.object),
+    genreChoices: Types.arrayOf(Types.object),
     dispatch: React.PropTypes.func,
     view: React.PropTypes.string,
 };
 
-function select(state) {
-    return state;
-}
+const modelsSelector = createStructuredSelector({
+    books: bookSelector,
+    authors: authorSelector,
+    publishers: publisherSelector,
+    genres: genreSelector,
+    bookChoices,
+    authorChoices,
+    publisherChoices,
+    genreChoices,
+});
 
-export default connect(select)(App);
+const appSelector = state => {
+    const models = modelsSelector(state.orm);
+    const view = state.view;
+    return {
+        ...models,
+        view,
+    };
+};
+
+export default connect(appSelector)(App);
