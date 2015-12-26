@@ -1,10 +1,4 @@
 import React, {Component} from 'react';
-import {
-    Book,
-    Author,
-    Publisher,
-    Genre,
-} from './models';
 import Input from 'react-bootstrap/lib/Input';
 import ButtonInput from 'react-bootstrap/lib/ButtonInput';
 
@@ -177,31 +171,25 @@ ModelFormBase.defaultProps = {
     onSubmit: () => undefined,
 };
 
-export class ModelForm extends Component {
-    onSubmit(vals) {
-        this.props.onSubmit(vals);
-    }
+const ModelForm = props => {
+    const modelClass = props.modelClass;
+    const passProps = {
+        modelClass,
+        fields: props.fields,
+        initial: props.initial,
+        onSubmit: props.onSubmit,
+        validate: modelClass.validate.bind(modelClass),
+    };
+    const modelName = modelClass.modelName;
+    const heading = props.initial ? 'Edit' : `Add a ${modelName}`;
 
-    render() {
-        const modelClass = this.props.modelClass;
-        const props = {
-            modelClass,
-            fields: this.props.fields,
-            initial: this.props.initial,
-            onSubmit: this.onSubmit.bind(this),
-            validate: modelClass.validate.bind(modelClass),
-        };
-        const modelName = modelClass.modelName;
-        const heading = this.props.initial ? 'Edit' : `Add a ${modelName}`;
-
-        return (
-            <div>
-                <h2>{heading}</h2>
-                <ModelFormBase {...props}/>
-            </div>
-        );
-    }
-}
+    return (
+        <div>
+            <h2>{heading}</h2>
+            <ModelFormBase {...passProps}/>
+        </div>
+    );
+};
 
 ModelForm.propTypes = {
     onSubmit: Types.func,
@@ -210,98 +198,4 @@ ModelForm.propTypes = {
     fields: Types.object.isRequired,
 };
 
-export class AuthorForm extends Component {
-    render() {
-        const props = Object.assign({
-            fields: {
-                name: {
-                    type: 'text',
-                },
-            },
-        }, this.props);
-        return <ModelForm {...props}/>;
-    }
-}
-AuthorForm.propTypes = {
-    onSubmit: Types.func,
-    initial: Types.object,
-};
-AuthorForm.defaultProps = {
-    modelClass: Author,
-};
-
-export class GenreForm extends Component {
-    render() {
-        const props = Object.assign({
-            fields: {
-                name: {
-                    type: 'text',
-                },
-            },
-        }, this.props);
-        return <ModelForm {...props}/>;
-    }
-}
-GenreForm.propTypes = {
-    modelClass: Types.func,
-    onSubmit: Types.func,
-    initial: Types.object,
-};
-GenreForm.defaultProps = {
-    modelClass: Genre,
-};
-
-export class PublisherForm extends Component {
-    render() {
-        const props = Object.assign({
-            fields: {
-                name: {
-                    type: 'text',
-                },
-            },
-        }, this.props);
-        return <ModelForm {...props}/>;
-    }
-}
-PublisherForm.propTypes = {
-    onSubmit: Types.func,
-    initial: Types.object,
-};
-PublisherForm.defaultProps = {
-    modelClass: Publisher,
-};
-
-export class BookForm extends Component {
-    render() {
-        const props = Object.assign({
-            fields: {
-                name: {
-                    type: 'text',
-                },
-                authors: {
-                    type: 'many',
-                    choices: this.props.authorChoices,
-                },
-                publisher: {
-                    type: 'fk',
-                    choices: this.props.publisherChoices,
-                },
-                genres: {
-                    type: 'many',
-                    choices: this.props.genreChoices,
-                },
-            },
-        }, this.props);
-        return <ModelForm {...props}/>;
-    }
-}
-BookForm.propTypes = {
-    onSubmit: Types.func,
-    initial: Types.object,
-    authorChoices: Types.arrayOf(Types.object),
-    publisherChoices: Types.arrayOf(Types.object),
-    genreChoices: Types.arrayOf(Types.object),
-};
-BookForm.defaultProps = {
-    modelClass: Book,
-};
+export default ModelForm;

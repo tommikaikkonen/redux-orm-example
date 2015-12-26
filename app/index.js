@@ -4,7 +4,7 @@ import {Provider} from 'react-redux';
 import {createStore, combineReducers, applyMiddleware} from 'redux';
 import {viewReducer} from './reducers';
 import App from './components';
-import {schema} from './models';
+import schema from './schema';
 import logger from 'redux-diff-logger';
 
 const rootReducer = combineReducers({
